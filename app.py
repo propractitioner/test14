@@ -3,8 +3,16 @@ import requests
 from bs4 import BeautifulSoup
 import time
 
-# 자동 새로고침: 5분마다 새로고침
-st.experimental_autorefresh(interval=300000, key="auto-refresh")
+# 자동 새로고침 (자바스크립트 injection 사용)
+refresh_interval = 300000  # 300,000 밀리초 = 5분
+refresh_script = f"""
+<script>
+setTimeout(function(){{
+    window.location.reload(1);
+}}, {refresh_interval});
+</script>
+"""
+st.components.v1.html(refresh_script, height=0)
 
 # CSS 스타일 (https://techurls.com/ 참고)
 st.markdown(
@@ -38,7 +46,7 @@ st.markdown(
 st.title("뉴스 모음 웹앱")
 st.write("새로운 기사들의 업로드 시각과 제목을 확인하세요. 제목을 클릭하면 해당 기사로 이동합니다.")
 
-# 크롤링 함수들 (생략: 기존 코드 사용)
+# 크롤링 함수들
 def get_hackernews_articles():
     articles = []
     try:
@@ -158,17 +166,16 @@ def fetch_all_articles():
     articles.extend(get_arstechnica_articles())
     return articles
 
-# 수동 새로고침 버튼 (자동 새로고침 기능을 사용하므로 아래 코드는 선택사항)
-if st.button("새로고침 (수동)"):
-    # st.experimental_rerun() 대신 간단히 캐시를 초기화하거나, query parameter를 변경하는 방법도 고려해볼 수 있습니다.
+# 수동 새로고침 버튼 (필요에 따라 사용)
+if st.button("수동 새로고침"):
     st.experimental_set_query_params(refresh=str(time.time()))
-    st.experimental_rerun()  # 만약 여전히 오류가 발생한다면 이 줄은 주석 처리하세요.
+    st.experimental_rerun()
 
 # 기사 크롤링
 with st.spinner("기사를 불러오는 중..."):
     articles = fetch_all_articles()
 
-# 기사 출력
+# 각 기사 출력
 for art in articles:
     st.markdown(
         f"""
