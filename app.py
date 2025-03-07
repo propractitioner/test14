@@ -3,7 +3,10 @@ import requests
 from bs4 import BeautifulSoup
 import time
 
-# CSS를 이용한 기본 스타일 (https://techurls.com/ 참고)
+# 자동 새로고침: 5분마다 새로고침
+st.experimental_autorefresh(interval=300000, key="auto-refresh")
+
+# CSS 스타일 (https://techurls.com/ 참고)
 st.markdown(
     """
     <style>
@@ -35,7 +38,7 @@ st.markdown(
 st.title("뉴스 모음 웹앱")
 st.write("새로운 기사들의 업로드 시각과 제목을 확인하세요. 제목을 클릭하면 해당 기사로 이동합니다.")
 
-# --- 크롤링 함수들 ---
+# 크롤링 함수들 (생략: 기존 코드 사용)
 def get_hackernews_articles():
     articles = []
     try:
@@ -48,7 +51,6 @@ def get_hackernews_articles():
                 continue
             title = title_tag.get_text(strip=True)
             url = title_tag.get("href")
-            # 업로드 시간은 바로 아래 형제 tr의 subtext에서 추출
             subtext = item.find_next_sibling("tr").find("td", class_="subtext")
             time_text = ""
             if subtext:
@@ -70,7 +72,6 @@ def get_theverge_articles():
     try:
         res = requests.get("https://www.theverge.com/")
         soup = BeautifulSoup(res.text, "html.parser")
-        # The Verge의 기사들은 c-entry-box--compact 클래스 내에 있음
         boxes = soup.find_all("div", class_="c-entry-box--compact")
         for box in boxes:
             title_tag = box.find("h2", class_="c-entry-box--compact__title")
@@ -83,7 +84,6 @@ def get_theverge_articles():
                     continue
             else:
                 continue
-            # 시간은 <time> 태그에서 추출 (datetime 속성 또는 텍스트)
             time_tag = box.find("time")
             time_text = time_tag.get("datetime") if time_tag and time_tag.has_attr("datetime") else (time_tag.get_text(strip=True) if time_tag else "")
             articles.append({
@@ -101,7 +101,6 @@ def get_techcrunch_articles():
     try:
         res = requests.get("https://techcrunch.com/")
         soup = BeautifulSoup(res.text, "html.parser")
-        # TechCrunch 기사는 <article> 태그로 구분됨
         for article in soup.find_all("article"):
             header = article.find("header", class_="post-block__header")
             if not header:
@@ -128,7 +127,6 @@ def get_arstechnica_articles():
     try:
         res = requests.get("https://arstechnica.com/")
         soup = BeautifulSoup(res.text, "html.parser")
-        # Ars Technica 기사는 보통 "li.tease" 클래스에 있음
         for li in soup.find_all("li", class_="tease"):
             title_tag = li.find("h2", class_="tease-title")
             if title_tag:
@@ -160,15 +158,17 @@ def fetch_all_articles():
     articles.extend(get_arstechnica_articles())
     return articles
 
-# 자동 새로고침 버튼 (또는 st.experimental_rerun을 사용할 수도 있음)
-if st.button("새로고침"):
-    st.experimental_rerun()
+# 수동 새로고침 버튼 (자동 새로고침 기능을 사용하므로 아래 코드는 선택사항)
+if st.button("새로고침 (수동)"):
+    # st.experimental_rerun() 대신 간단히 캐시를 초기화하거나, query parameter를 변경하는 방법도 고려해볼 수 있습니다.
+    st.experimental_set_query_params(refresh=str(time.time()))
+    st.experimental_rerun()  # 만약 여전히 오류가 발생한다면 이 줄은 주석 처리하세요.
 
 # 기사 크롤링
 with st.spinner("기사를 불러오는 중..."):
     articles = fetch_all_articles()
 
-# 각 기사 출력
+# 기사 출력
 for art in articles:
     st.markdown(
         f"""
@@ -182,6 +182,4 @@ for art in articles:
     )
 
 st.write("※ 이 앱은 주기적으로 최신 기사를 크롤링합니다.")
-
-# 배포 추천 안내
-st.info("앱 배포는 [Streamlit Cloud](https://streamlit.io/cloud), Heroku, Render 등과 같은 서비스를 추천합니다.")
+st.info("앱 배포는 [Streamlit Cloud](https://streamlit.io/cloud), Heroku, Render 등의 서비스를 추천합니다.")
