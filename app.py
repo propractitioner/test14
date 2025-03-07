@@ -3,8 +3,8 @@ import requests
 from bs4 import BeautifulSoup
 import time
 
-# 자동 새로고침 (자바스크립트 injection 사용, 5분마다 새로고침)
-refresh_interval = 300000  # 300,000 밀리초 = 5분
+# 자동 새로고침: 5분(300,000ms)마다 페이지 새로고침을 위한 JS 코드 주입
+refresh_interval = 300000  # 5분
 refresh_script = f"""
 <script>
 setTimeout(function(){{
@@ -93,7 +93,11 @@ def get_theverge_articles():
             else:
                 continue
             time_tag = box.find("time")
-            time_text = time_tag.get("datetime") if time_tag and time_tag.has_attr("datetime") else (time_tag.get_text(strip=True) if time_tag else "")
+            time_text = (
+                time_tag.get("datetime")
+                if time_tag and time_tag.has_attr("datetime")
+                else (time_tag.get_text(strip=True) if time_tag else "")
+            )
             articles.append({
                 "title": title,
                 "time": time_text,
@@ -119,7 +123,11 @@ def get_techcrunch_articles():
             title = a_tag.get_text(strip=True)
             url = a_tag.get("href")
             time_tag = article.find("time")
-            time_text = time_tag.get("datetime") if time_tag and time_tag.has_attr("datetime") else (time_tag.get_text(strip=True) if time_tag else "")
+            time_text = (
+                time_tag.get("datetime")
+                if time_tag and time_tag.has_attr("datetime")
+                else (time_tag.get_text(strip=True) if time_tag else "")
+            )
             articles.append({
                 "title": title,
                 "time": time_text,
@@ -166,7 +174,7 @@ def fetch_all_articles():
     articles.extend(get_arstechnica_articles())
     return articles
 
-# 수동 새로고침 버튼 (자바스크립트로 페이지 새로고침)
+# 수동 새로고침 버튼: 클릭 시 자바스크립트를 이용해 페이지를 새로고침합니다.
 if st.button("수동 새로고침"):
     st.components.v1.html("<script>window.location.reload();</script>", height=0)
 
@@ -184,7 +192,7 @@ for art in articles:
             <span>{art['time']} | {art['source']}</span>
         </div>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
 st.write("※ 이 앱은 주기적으로 최신 기사를 크롤링합니다.")
