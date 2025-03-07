@@ -3,12 +3,12 @@ import requests
 from bs4 import BeautifulSoup
 import time
 
-# 자동 새로고침 (자바스크립트 injection 사용)
+# 자동 새로고침 (자바스크립트 injection 사용, 5분마다 새로고침)
 refresh_interval = 300000  # 300,000 밀리초 = 5분
 refresh_script = f"""
 <script>
 setTimeout(function(){{
-    window.location.reload(1);
+    window.location.reload();
 }}, {refresh_interval});
 </script>
 """
@@ -166,10 +166,9 @@ def fetch_all_articles():
     articles.extend(get_arstechnica_articles())
     return articles
 
-# 수동 새로고침 버튼 (필요에 따라 사용)
+# 수동 새로고침 버튼 (자바스크립트로 페이지 새로고침)
 if st.button("수동 새로고침"):
-    st.experimental_set_query_params(refresh=str(time.time()))
-    st.experimental_rerun()
+    st.components.v1.html("<script>window.location.reload();</script>", height=0)
 
 # 기사 크롤링
 with st.spinner("기사를 불러오는 중..."):
